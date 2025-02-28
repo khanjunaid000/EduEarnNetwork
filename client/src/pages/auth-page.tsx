@@ -39,12 +39,6 @@ export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
   const [, setLocation] = useLocation();
 
-  // Redirect if already logged in
-  if (user) {
-    setLocation("/");
-    return null;
-  }
-
   const loginForm = useForm({
     defaultValues: {
       username: "",
@@ -53,13 +47,23 @@ export default function AuthPage() {
   });
 
   const registerForm = useForm({
-    resolver: zodResolver(insertUserSchema),
+    resolver: zodResolver(
+      insertUserSchema.extend({
+        role: insertUserSchema.shape.role,
+      })
+    ),
     defaultValues: {
       username: "",
       password: "",
       role: "student",
     },
   });
+
+  // Return auth page or redirect based on user state
+  if (user) {
+    // Instead of directly returning null and setting location, render nothing
+    return <>{setLocation("/")}</>;
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
