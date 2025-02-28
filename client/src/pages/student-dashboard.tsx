@@ -1,6 +1,7 @@
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
 import { Enrollment, Course, QuizAttempt } from "@shared/schema";
+import { useLocation } from "wouter";
 import {
   Card,
   CardContent,
@@ -10,7 +11,6 @@ import {
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { useLocation } from "wouter";
 import {
   Award,
   BookOpen,
@@ -23,12 +23,15 @@ import {
   TrendingUp,
   Target,
   Flame,
-  Loader2 // Added import
+  Loader2
 } from "lucide-react";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function StudentDashboard() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
 
   const { data: enrollments, isLoading: enrollmentsLoading } = useQuery<
     Enrollment[]
@@ -44,6 +47,10 @@ export default function StudentDashboard() {
     queryKey: ["/api/quiz-attempts"],
   });
 
+  const [studyStreak, setStudyStreak] = useState(5); // This will come from backend
+  const [todaysGoal, setTodaysGoal] = useState(2); // This will come from backend
+  const [completedToday, setCompletedToday] = useState(1); // This will come from backend
+
   if (!user) return null;
 
   const completedCourses = enrollments?.filter((e) => e.completed) || [];
@@ -51,9 +58,23 @@ export default function StudentDashboard() {
   const averageQuizScore =
     quizAttempts?.reduce((acc, curr) => acc + curr.score, 0) || 0;
 
-  const studyStreak = 5; // This will come from backend
-  const todaysGoal = 2; // This will come from backend
-  const completedToday = 1; // This will come from backend
+  const startStudySession = () => {
+    toast({
+      title: "स्टडी सेशन शुरू",
+      description: "आपका अगला टॉपिक: डेटा स्ट्रक्चर्स",
+    });
+    // In real app, this would start a study session
+    setLocation("/course/next-topic");
+  };
+
+  const viewTodaysLectures = () => {
+    toast({
+      title: "आज के लेक्चर्स",
+      description: "आज के 2 विडियो लेक्चर्स की लिस्ट",
+    });
+    // In real app, this would show today's lecture list
+    setLocation("/lectures/today");
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
@@ -142,7 +163,7 @@ export default function StudentDashboard() {
                     <Clock className="h-4 w-4 text-muted-foreground" />
                     <span>अगला टॉपिक: डेटा स्ट्रक्चर्स</span>
                   </div>
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" onClick={startStudySession}>
                     शुरू करें
                   </Button>
                 </div>
@@ -151,7 +172,7 @@ export default function StudentDashboard() {
                     <Calendar className="h-4 w-4 text-muted-foreground" />
                     <span>आज का टारगेट: 2 विडियो लेक्चर्स</span>
                   </div>
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" onClick={viewTodaysLectures}>
                     देखें
                   </Button>
                 </div>
@@ -200,7 +221,7 @@ export default function StudentDashboard() {
           </Card>
         </div>
 
-        {/* Recent Activity and Courses */}
+        {/* Recent Activity */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <Card>
             <CardHeader>
@@ -215,7 +236,8 @@ export default function StudentDashboard() {
                 {quizAttempts?.slice(0, 3).map((attempt) => (
                   <div
                     key={attempt.id}
-                    className="flex items-center justify-between"
+                    className="flex items-center justify-between cursor-pointer hover:bg-gray-50 p-2 rounded-md"
+                    onClick={() => setLocation(`/quiz-attempt/${attempt.id}`)}
                   >
                     <div className="flex items-center gap-2">
                       <GraduationCap className="h-4 w-4 text-muted-foreground" />
@@ -245,7 +267,7 @@ export default function StudentDashboard() {
                 if (!course) return null;
 
                 return (
-                  <Card key={enrollment.id}>
+                  <Card key={enrollment.id} className="hover:shadow-lg transition-shadow">
                     <CardHeader>
                       <CardTitle>{course.title}</CardTitle>
                       <CardDescription>{course.description}</CardDescription>
