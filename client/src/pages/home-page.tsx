@@ -10,7 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Loader2, LogOut, Video } from "lucide-react";
+import { Loader2, LogOut, Video, GraduationCap } from "lucide-react";
 
 export default function HomePage() {
   const { user, logoutMutation } = useAuth();
@@ -20,7 +20,34 @@ export default function HomePage() {
     queryKey: ["/api/courses"],
   });
 
-  if (!user) return null;
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="container mx-auto px-4">
+          <header className="py-8">
+            <h1 className="text-3xl font-bold">RMEduPath</h1>
+            <p className="mt-2 text-muted-foreground">
+              आपका शैक्षिक साथी
+            </p>
+          </header>
+
+          <div className="mt-8 text-center">
+            <h2 className="text-2xl font-semibold mb-4">
+              अपनी यात्रा शुरू करें
+            </h2>
+            <Button 
+              size="lg"
+              onClick={() => setLocation("/auth")}
+              className="mx-auto"
+            >
+              <GraduationCap className="mr-2 h-5 w-5" />
+              लॉगिन / रजिस्टर
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
