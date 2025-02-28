@@ -22,7 +22,8 @@ import {
   Trophy,
   TrendingUp,
   Target,
-  Flame
+  Flame,
+  Loader2 // Added import
 } from "lucide-react";
 
 export default function StudentDashboard() {
@@ -221,7 +222,7 @@ export default function StudentDashboard() {
                       <span>क्विज स्कोर: {attempt.score}%</span>
                     </div>
                     <span className="text-sm text-muted-foreground">
-                      {new Date(attempt.createdAt).toLocaleDateString()}
+                      {attempt.createdAt ? new Date(attempt.createdAt).toLocaleDateString() : ''}
                     </span>
                   </div>
                 ))}
