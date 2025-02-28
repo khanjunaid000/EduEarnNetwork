@@ -609,7 +609,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(401).json({ message: "Unauthorized" });
     }
     next();
-  }, app.static(uploadsDir));
+  }, express.static(uploadsDir));
 
   const httpServer = createServer(app);
   return httpServer;
