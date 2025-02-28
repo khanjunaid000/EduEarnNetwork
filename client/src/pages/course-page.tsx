@@ -1,7 +1,7 @@
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRoute } from "wouter";
-import { Course, Quiz, Enrollment } from "@shared/schema";
+import { Course, Quiz, Enrollment, insertQuizSchema } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import ReactPlayer from "react-player";
 import {
@@ -15,6 +15,37 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { useState } from 'react';
+import { useForm } from "react-hook-form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+
+type QuizFormValues = {
+  title: string;
+  questions: string[];
+  answers: string[];
+};
+
+const quizFormSchema = insertQuizSchema.extend({
+  questions: z.array(z.string().min(1, "Question is required")),
+  answers: z.array(z.string().min(1, "Answer is required"))
+});
 
 export default function CoursePage() {
   const { user } = useAuth();
@@ -69,6 +100,46 @@ export default function CoursePage() {
     },
   });
 
+  const handleProgress = ({ played }: { played: number }) => {
+    const progress = Math.round(played * 100);
+    if (enrollment && progress > enrollment.progress) {
+      updateProgressMutation.mutate(progress);
+    }
+  };
+
+  const [questions, setQuestions] = useState(['']);
+
+  const quizForm = useForm<QuizFormValues>({
+    resolver: zodResolver(quizFormSchema),
+    defaultValues: {
+      title: "",
+      questions: [""],
+      answers: [""],
+    },
+  });
+
+  const onQuizSubmit = async (data: QuizFormValues) => {
+    try {
+      await apiRequest("POST", "/api/quizzes", {
+        ...data,
+        courseId,
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/courses", courseId, "quizzes"] });
+      toast({
+        title: "Quiz created",
+        description: "Your quiz has been created successfully",
+      });
+      quizForm.reset();
+      setQuestions(['']);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   if (courseLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -84,13 +155,6 @@ export default function CoursePage() {
       </div>
     );
   }
-
-  const handleProgress = ({ played }: { played: number }) => {
-    const progress = Math.round(played * 100);
-    if (enrollment && progress > enrollment.progress) {
-      updateProgressMutation.mutate(progress);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
@@ -167,6 +231,84 @@ export default function CoursePage() {
                   ))}
                 </div>
               </div>
+            )}
+
+            {user?.role === "educator" && course.educatorId === user.id && (
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button className="w-full mt-4">
+                    Create New Quiz
+                  </Button>
+                </SheetTrigger>
+                <SheetContent>
+                  <SheetHeader>
+                    <SheetTitle>Create Quiz</SheetTitle>
+                  </SheetHeader>
+                  <div className="mt-4">
+                    <Form {...quizForm}>
+                      <form onSubmit={quizForm.handleSubmit(onQuizSubmit)} className="space-y-4">
+                        <FormField
+                          control={quizForm.control}
+                          name="title"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Quiz Title</FormLabel>
+                              <FormControl>
+                                <Input {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        {questions.map((_, index) => (
+                          <div key={index} className="space-y-2">
+                            <FormField
+                              control={quizForm.control}
+                              name={`questions.${index}`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Question {index + 1}</FormLabel>
+                                  <FormControl>
+                                    <Input {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={quizForm.control}
+                              name={`answers.${index}`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Answer {index + 1}</FormLabel>
+                                  <FormControl>
+                                    <Input {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                        ))}
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => {
+                            setQuestions([...questions, '']);
+                            quizForm.setValue(`questions.${questions.length}`, '');
+                            quizForm.setValue(`answers.${questions.length}`, '');
+                          }}
+                        >
+                          Add Question
+                        </Button>
+                        <Button type="submit" className="w-full">
+                          Create Quiz
+                        </Button>
+                      </form>
+                    </Form>
+                  </div>
+                </SheetContent>
+              </Sheet>
             )}
           </div>
         )}

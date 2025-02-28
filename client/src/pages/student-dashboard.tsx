@@ -17,6 +17,8 @@ import {
   GraduationCap,
   Loader2,
   Users,
+  Trophy,
+  TrendingUp,
 } from "lucide-react";
 
 export default function StudentDashboard() {
@@ -38,6 +40,10 @@ export default function StudentDashboard() {
   });
 
   if (!user) return null;
+
+  const completedCourses = enrollments?.filter((e) => e.completed) || [];
+  const inProgressCourses = enrollments?.filter((e) => !e.completed) || [];
+  const averageQuizScore = quizAttempts?.reduce((acc, curr) => acc + curr.score, 0) || 0;
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
@@ -73,6 +79,9 @@ export default function StudentDashboard() {
               <div className="text-2xl font-bold">
                 {quizAttempts?.length || 0}
               </div>
+              <p className="text-xs text-muted-foreground">
+                Avg. Score: {(averageQuizScore / (quizAttempts?.length || 1)).toFixed(1)}%
+              </p>
             </CardContent>
           </Card>
 
@@ -83,6 +92,9 @@ export default function StudentDashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">${user.earnings}</div>
+              <p className="text-xs text-muted-foreground">
+                From referrals & rewards
+              </p>
             </CardContent>
           </Card>
 
@@ -93,6 +105,66 @@ export default function StudentDashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-xl font-bold">{user.referralCode}</div>
+              <p className="text-xs text-muted-foreground">Share to earn</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Trophy className="h-5 w-5" />
+                Learning Progress
+              </CardTitle>
+              <CardDescription>
+                Track your course completion status
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <div className="flex justify-between text-sm mb-2">
+                    <span>Overall Progress</span>
+                    <span>
+                      {completedCourses.length}/{enrollments?.length || 0} Courses
+                    </span>
+                  </div>
+                  <Progress
+                    value={
+                      (completedCourses.length / (enrollments?.length || 1)) * 100
+                    }
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5" />
+                Recent Activity
+              </CardTitle>
+              <CardDescription>Your latest achievements</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {quizAttempts?.slice(0, 3).map((attempt) => (
+                  <div
+                    key={attempt.id}
+                    className="flex items-center justify-between"
+                  >
+                    <div className="flex items-center gap-2">
+                      <GraduationCap className="h-4 w-4 text-muted-foreground" />
+                      <span>Quiz Score: {attempt.score}%</span>
+                    </div>
+                    <span className="text-sm text-muted-foreground">
+                      {new Date(attempt.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </CardContent>
           </Card>
         </div>
