@@ -25,9 +25,21 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Video, Upload, Book } from "lucide-react";
+import { 
+  Loader2, 
+  Video, 
+  Upload, 
+  Book,
+  Users,
+  IndianRupee,
+  LineChart,
+  GraduationCap,
+  Clock,
+  BarChart
+} from "lucide-react";
 import { useCallback } from "react";
 import { useDropzone } from "react-dropzone";
+import { Progress } from "@/components/ui/progress";
 
 export default function EducatorDashboard() {
   const { user } = useAuth();
@@ -38,10 +50,15 @@ export default function EducatorDashboard() {
     queryKey: ["/api/courses"],
   });
 
+  const totalStudents = 150; // This will come from backend
+  const totalEarnings = 25000; // This will come from backend
+  const avgCompletionRate = 75; // This will come from backend
+  const activeStudents = 120; // This will come from backend
+
   const form = useForm({
     resolver: zodResolver(
       insertCourseSchema.extend({
-        price: insertCourseSchema.shape.price.min(0),
+        price: insertCourseSchema.shape.price,
         studyMaterial: insertCourseSchema.shape.videoUrl,
       })
     ),
@@ -64,8 +81,8 @@ export default function EducatorDashboard() {
         form.setValue("studyMaterial", url);
       }
       toast({
-        title: "File uploaded",
-        description: `${file.name} has been uploaded successfully`,
+        title: "फाइल अपलोड हो गई है",
+        description: `${file.name} सफलतापूर्वक अपलोड हो गई है`,
       });
     }
   }, [form, toast]);
@@ -91,12 +108,12 @@ export default function EducatorDashboard() {
       queryClient.invalidateQueries({ queryKey: ["/api/courses"] });
       form.reset();
       toast({
-        title: "Course created",
-        description: "Your course has been created successfully",
+        title: "कोर्स बन गया है",
+        description: "आपका कोर्स सफलतापूर्वक बन गया है",
       });
     } catch (error: any) {
       toast({
-        title: "Error",
+        title: "एरर",
         description: error.message,
         variant: "destructive",
       });
@@ -109,18 +126,78 @@ export default function EducatorDashboard() {
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-6xl mx-auto space-y-8">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Educator Dashboard</h1>
+          <h1 className="text-3xl font-bold mb-2">एजुकेटर डैशबोर्ड</h1>
           <p className="text-muted-foreground">
-            Create and manage your courses
+            अपने कोर्सेज को मैनेज करें
           </p>
         </div>
 
+        {/* Quick Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                कुल स्टूडेंट्स
+              </CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{totalStudents}</div>
+              <p className="text-xs text-muted-foreground">
+                {activeStudents} एक्टिव स्टूडेंट्स
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                कुल कमाई
+              </CardTitle>
+              <IndianRupee className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">₹{totalEarnings}</div>
+              <p className="text-xs text-muted-foreground">
+                पिछले महीने से +15%
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                कंप्लीशन रेट
+              </CardTitle>
+              <LineChart className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{avgCompletionRate}%</div>
+              <Progress value={avgCompletionRate} className="mt-2" />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">कुल कोर्सेज</CardTitle>
+              <Book className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{myCourses?.length || 0}</div>
+              <p className="text-xs text-muted-foreground">
+                पब्लिश्ड कोर्सेज
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Course Creation and Management */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <Card>
             <CardHeader>
-              <CardTitle>Create New Course</CardTitle>
+              <CardTitle>नया कोर्स बनाएं</CardTitle>
               <CardDescription>
-                Fill in the details and upload course materials
+                कोर्स की जानकारी और कंटेंट अपलोड करें
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -131,7 +208,7 @@ export default function EducatorDashboard() {
                     name="title"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Course Title</FormLabel>
+                        <FormLabel>कोर्स का टाइटल</FormLabel>
                         <FormControl>
                           <Input {...field} />
                         </FormControl>
@@ -144,7 +221,7 @@ export default function EducatorDashboard() {
                     name="description"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Description</FormLabel>
+                        <FormLabel>विवरण</FormLabel>
                         <FormControl>
                           <Textarea {...field} />
                         </FormControl>
@@ -158,7 +235,7 @@ export default function EducatorDashboard() {
                     name="videoUrl"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Course Video</FormLabel>
+                        <FormLabel>कोर्स विडियो</FormLabel>
                         <FormControl>
                           <div
                             {...getVideoProps()}
@@ -167,11 +244,11 @@ export default function EducatorDashboard() {
                             <input {...getVideoInputProps()} />
                             <Video className="mx-auto h-8 w-8 mb-4 text-muted-foreground" />
                             <p className="text-sm text-muted-foreground">
-                              Drag and drop your video here, or click to select
+                              विडियो को यहाँ ड्रैग करें या सेलेक्ट करें
                             </p>
                             {field.value && (
                               <p className="mt-2 text-sm text-green-600">
-                                Video uploaded successfully
+                                विडियो अपलोड हो गई है
                               </p>
                             )}
                           </div>
@@ -186,7 +263,7 @@ export default function EducatorDashboard() {
                     name="studyMaterial"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Study Material</FormLabel>
+                        <FormLabel>स्टडी मैटेरियल</FormLabel>
                         <FormControl>
                           <div
                             {...getMaterialProps()}
@@ -195,11 +272,11 @@ export default function EducatorDashboard() {
                             <input {...getMaterialInputProps()} />
                             <Book className="mx-auto h-8 w-8 mb-4 text-muted-foreground" />
                             <p className="text-sm text-muted-foreground">
-                              Upload PDF or Word documents
+                              पीडीएफ या वर्ड डॉक्यूमेंट अपलोड करें
                             </p>
                             {field.value && (
                               <p className="mt-2 text-sm text-green-600">
-                                Material uploaded successfully
+                                मैटेरियल अपलोड हो गया है
                               </p>
                             )}
                           </div>
@@ -214,7 +291,7 @@ export default function EducatorDashboard() {
                     name="price"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Price</FormLabel>
+                        <FormLabel>कीमत (₹)</FormLabel>
                         <FormControl>
                           <Input
                             {...field}
@@ -231,7 +308,7 @@ export default function EducatorDashboard() {
                     )}
                   />
                   <Button type="submit" className="w-full">
-                    Create Course
+                    कोर्स बनाएं
                   </Button>
                 </form>
               </Form>
@@ -239,7 +316,7 @@ export default function EducatorDashboard() {
           </Card>
 
           <div className="space-y-4">
-            <h2 className="text-xl font-semibold">My Courses</h2>
+            <h2 className="text-xl font-semibold">मेरे कोर्सेज</h2>
             {isLoading ? (
               <div className="flex justify-center py-8">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -257,15 +334,28 @@ export default function EducatorDashboard() {
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-4">
-                        <p className="text-sm text-muted-foreground">
-                          Price: ${course.price}
-                        </p>
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm text-muted-foreground">
+                            कीमत: ₹{course.price}
+                          </p>
+                          <div className="flex items-center gap-2">
+                            <Users className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm">150 स्टूडेंट्स</span>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-sm">
+                            <span>कंप्लीशन रेट</span>
+                            <span>75%</span>
+                          </div>
+                          <Progress value={75} />
+                        </div>
                         <Button
                           onClick={() => setLocation(`/course/${course.id}`)}
                           variant="outline"
                           className="w-full"
                         >
-                          Manage Course
+                          कोर्स मैनेज करें
                         </Button>
                       </div>
                     </CardContent>
