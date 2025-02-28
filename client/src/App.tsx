@@ -10,6 +10,7 @@ import HomePage from "@/pages/home-page";
 import EducatorDashboard from "@/pages/educator-dashboard";
 import StudentDashboard from "@/pages/student-dashboard";
 import CoursePage from "@/pages/course-page";
+import LecturesPage from "@/pages/lectures-page"; // Added import
 
 function Router() {
   return (
@@ -27,6 +28,7 @@ function Router() {
         roles={["student"]}
       />
       <ProtectedRoute path="/course/:id" component={CoursePage} />
+      <ProtectedRoute path="/lectures/today" component={LecturesPage} />
       <Route component={NotFound} />
     </Switch>
   );
