@@ -59,12 +59,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/user/profile", requireAuth, upload.single("profileImage"), async (req, res) => {
     const profileImage = req.file ? `/uploads/${req.file.filename}` : undefined;
-    
+
     const updateData = {
       ...req.body,
       ...(profileImage && { profileImage }),
     };
-    
+
     const updatedUser = await storage.updateUser(req.user.id, updateData);
     res.json(updatedUser);
   });
@@ -82,14 +82,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Course routes
   app.post("/api/courses", requireAuth, requireEducator, upload.single("thumbnail"), async (req, res) => {
     const thumbnailUrl = req.file ? `/uploads/${req.file.filename}` : undefined;
-    
+
     const courseData = {
       ...req.body,
       ...(thumbnailUrl && { thumbnailUrl }),
       educatorId: req.user.id,
       tags: req.body.tags ? JSON.parse(req.body.tags) : undefined
     };
-    
+
     const course = await storage.createCourse(courseData);
     res.status(201).json(course);
   });
@@ -114,23 +114,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/courses/:id", requireAuth, requireEducator, upload.single("thumbnail"), async (req, res) => {
     const course = await storage.getCourse(parseInt(req.params.id));
-    
+
     if (!course) {
       return res.status(404).json({ message: "Course not found" });
     }
-    
+
     if (course.educatorId !== req.user.id && req.user.role !== "admin") {
       return res.status(403).json({ message: "You can only edit your own courses" });
     }
-    
+
     const thumbnailUrl = req.file ? `/uploads/${req.file.filename}` : undefined;
-    
+
     const updateData = {
       ...req.body,
       ...(thumbnailUrl && { thumbnailUrl }),
       tags: req.body.tags ? JSON.parse(req.body.tags) : undefined
     };
-    
+
     const updatedCourse = await storage.updateCourse(parseInt(req.params.id), updateData);
     res.json(updatedCourse);
   });
@@ -138,22 +138,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Course Materials routes
   app.post("/api/course-materials", requireAuth, requireEducator, upload.single("file"), async (req, res) => {
     const course = await storage.getCourse(parseInt(req.body.courseId));
-    
+
     if (!course) {
       return res.status(404).json({ message: "Course not found" });
     }
-    
+
     if (course.educatorId !== req.user.id && req.user.role !== "admin") {
       return res.status(403).json({ message: "You can only add materials to your own courses" });
     }
-    
+
     const fileUrl = req.file ? `/uploads/${req.file.filename}` : undefined;
-    
+
     const materialData = {
       ...req.body,
       ...(fileUrl && { fileUrl })
     };
-    
+
     const material = await storage.createCourseMaterial(materialData);
     res.status(201).json(material);
   });
@@ -166,21 +166,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Quiz routes
   app.post("/api/quizzes", requireAuth, requireEducator, async (req, res) => {
     const course = await storage.getCourse(parseInt(req.body.courseId));
-    
+
     if (!course) {
       return res.status(404).json({ message: "Course not found" });
     }
-    
+
     if (course.educatorId !== req.user.id && req.user.role !== "admin") {
       return res.status(403).json({ message: "You can only add quizzes to your own courses" });
     }
-    
+
     const quizData = {
       ...req.body,
       questions: req.body.questions ? JSON.parse(req.body.questions) : [],
       answers: req.body.answers ? JSON.parse(req.body.answers) : []
     };
-    
+
     const quiz = await storage.createQuiz(quizData);
     res.status(201).json(quiz);
   });
@@ -192,31 +192,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/quizzes/:id", requireAuth, async (req, res) => {
     const quiz = await storage.getQuiz(parseInt(req.params.id));
-    
+
     if (!quiz) {
       return res.status(404).json({ message: "Quiz not found" });
     }
-    
+
     res.json(quiz);
   });
 
   // Live Class routes
   app.post("/api/live-classes", requireAuth, requireEducator, async (req, res) => {
     const course = await storage.getCourse(parseInt(req.body.courseId));
-    
+
     if (!course) {
       return res.status(404).json({ message: "Course not found" });
     }
-    
+
     if (course.educatorId !== req.user.id && req.user.role !== "admin") {
       return res.status(403).json({ message: "You can only schedule classes for your own courses" });
     }
-    
+
     const liveClassData = {
       ...req.body,
       educatorId: req.user.id
     };
-    
+
     const liveClass = await storage.createLiveClass(liveClassData);
     res.status(201).json(liveClass);
   });
@@ -234,22 +234,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Assignment routes
   app.post("/api/assignments", requireAuth, requireEducator, upload.single("file"), async (req, res) => {
     const course = await storage.getCourse(parseInt(req.body.courseId));
-    
+
     if (!course) {
       return res.status(404).json({ message: "Course not found" });
     }
-    
+
     if (course.educatorId !== req.user.id && req.user.role !== "admin") {
       return res.status(403).json({ message: "You can only create assignments for your own courses" });
     }
-    
+
     const fileUrl = req.file ? `/uploads/${req.file.filename}` : undefined;
-    
+
     const assignmentData = {
       ...req.body,
       ...(fileUrl && { fileUrl })
     };
-    
+
     const assignment = await storage.createAssignment(assignmentData);
     res.status(201).json(assignment);
   });
@@ -261,64 +261,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/assignments/:id/submissions", requireAuth, requireEducator, async (req, res) => {
     const assignment = await storage.getAssignment(parseInt(req.params.id));
-    
+
     if (!assignment) {
       return res.status(404).json({ message: "Assignment not found" });
     }
-    
+
     const course = await storage.getCourse(assignment.courseId);
-    
+
     if (course.educatorId !== req.user.id && req.user.role !== "admin") {
       return res.status(403).json({ message: "You can only view submissions for your own assignments" });
     }
-    
+
     const submissions = await storage.getAssignmentSubmissions(parseInt(req.params.id));
     res.json(submissions);
   });
 
   app.post("/api/assignments/:id/submissions", requireAuth, upload.single("file"), async (req, res) => {
     const assignment = await storage.getAssignment(parseInt(req.params.id));
-    
+
     if (!assignment) {
       return res.status(404).json({ message: "Assignment not found" });
     }
-    
+
     const fileUrl = req.file ? `/uploads/${req.file.filename}` : undefined;
-    
+
     if (!fileUrl) {
       return res.status(400).json({ message: "File is required" });
     }
-    
+
     const submissionData = {
       assignmentId: parseInt(req.params.id),
       userId: req.user.id,
       fileUrl,
       comments: req.body.comments
     };
-    
+
     const submission = await storage.createAssignmentSubmission(submissionData);
     res.status(201).json(submission);
   });
 
   app.post("/api/submissions/:id/grade", requireAuth, requireEducator, async (req, res) => {
     const submission = await storage.getAssignmentSubmission(parseInt(req.params.id));
-    
+
     if (!submission) {
       return res.status(404).json({ message: "Submission not found" });
     }
-    
+
     const assignment = await storage.getAssignment(submission.assignmentId);
     const course = await storage.getCourse(assignment.courseId);
-    
+
     if (course.educatorId !== req.user.id && req.user.role !== "admin") {
       return res.status(403).json({ message: "You can only grade submissions for your own assignments" });
     }
-    
+
     const gradeData = {
       grade: req.body.grade,
       gradedAt: new Date()
     };
-    
+
     const updatedSubmission = await storage.gradeAssignmentSubmission(parseInt(req.params.id), gradeData);
     res.json(updatedSubmission);
   });
@@ -329,7 +329,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       ...req.body,
       userId: req.user.id
     };
-    
+
     const discussion = await storage.createDiscussion(discussionData);
     res.status(201).json(discussion);
   });
@@ -351,7 +351,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       userId: req.user.id,
       content: req.body.content
     };
-    
+
     const reply = await storage.createDiscussionReply(replyData);
     res.status(201).json(reply);
   });
@@ -363,17 +363,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/discussions/:id/resolve", requireAuth, async (req, res) => {
     const discussion = await storage.getDiscussion(parseInt(req.params.id));
-    
+
     if (!discussion) {
       return res.status(404).json({ message: "Discussion not found" });
     }
-    
+
     const course = await storage.getCourse(discussion.courseId);
-    
+
     if (discussion.userId !== req.user.id && course.educatorId !== req.user.id && req.user.role !== "admin") {
       return res.status(403).json({ message: "You can only resolve your own discussions or discussions in your courses" });
     }
-    
+
     const updatedDiscussion = await storage.updateDiscussion(parseInt(req.params.id), { isResolved: true });
     res.json(updatedDiscussion);
   });
@@ -407,15 +407,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/courses/:courseId/enrollments", requireAuth, requireEducator, async (req, res) => {
     const course = await storage.getCourse(parseInt(req.params.courseId));
-    
+
     if (!course) {
       return res.status(404).json({ message: "Course not found" });
     }
-    
+
     if (course.educatorId !== req.user.id && req.user.role !== "admin") {
       return res.status(403).json({ message: "You can only view enrollments for your own courses" });
     }
-    
+
     const enrollments = await storage.getCourseEnrollments(parseInt(req.params.courseId));
     res.json(enrollments);
   });
@@ -429,7 +429,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       answers: req.body.answers ? JSON.parse(req.body.answers) : undefined,
       timeSpent: req.body.timeSpent
     };
-    
+
     const attempt = await storage.createQuizAttempt(attemptData);
     res.status(201).json(attempt);
   });
@@ -441,17 +441,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/quizzes/:quizId/attempts", requireAuth, requireEducator, async (req, res) => {
     const quiz = await storage.getQuiz(parseInt(req.params.quizId));
-    
+
     if (!quiz) {
       return res.status(404).json({ message: "Quiz not found" });
     }
-    
+
     const course = await storage.getCourse(quiz.courseId);
-    
+
     if (course.educatorId !== req.user.id && req.user.role !== "admin") {
       return res.status(403).json({ message: "You can only view quiz attempts for your own quizzes" });
     }
-    
+
     const attempts = await storage.getQuizAttempts(parseInt(req.params.quizId));
     res.json(attempts);
   });
@@ -467,22 +467,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         type: req.body.type,
         relatedId: req.body.relatedId
       };
-      
+
       const notification = await storage.createNotification(notificationData);
       res.status(201).json(notification);
     } 
     // If sending to all students in a course
     else if (req.body.courseId) {
       const course = await storage.getCourse(parseInt(req.body.courseId));
-      
+
       if (!course) {
         return res.status(404).json({ message: "Course not found" });
       }
-      
+
       if (course.educatorId !== req.user.id && req.user.role !== "admin") {
         return res.status(403).json({ message: "You can only send notifications to your own courses" });
       }
-      
+
       const enrollments = await storage.getCourseEnrollments(parseInt(req.body.courseId));
       const notificationPromises = enrollments.map(enrollment => 
         storage.createNotification({
@@ -493,7 +493,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           relatedId: req.body.relatedId
         })
       );
-      
+
       const notifications = await Promise.all(notificationPromises);
       res.status(201).json(notifications);
     } else {
@@ -508,15 +508,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/notifications/:id/read", requireAuth, async (req, res) => {
     const notification = await storage.getNotification(parseInt(req.params.id));
-    
+
     if (!notification) {
       return res.status(404).json({ message: "Notification not found" });
     }
-    
+
     if (notification.userId !== req.user.id) {
       return res.status(403).json({ message: "You can only mark your own notifications as read" });
     }
-    
+
     const updatedNotification = await storage.updateNotification(parseInt(req.params.id), { isRead: true });
     res.json(updatedNotification);
   });
@@ -525,10 +525,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/educator/analytics", requireAuth, requireEducator, async (req, res) => {
     const courses = await storage.getEducatorCourses(req.user.id);
     const courseIds = courses.map(course => course.id);
-    
+
     const analyticsData = await storage.getAnalyticsByCourseIds(courseIds);
     const totalEarnings = await storage.getEducatorEarnings(req.user.id);
-    
+
     res.json({
       coursesAnalytics: analyticsData,
       totalEarnings
@@ -537,15 +537,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/courses/:courseId/analytics", requireAuth, requireEducator, async (req, res) => {
     const course = await storage.getCourse(parseInt(req.params.courseId));
-    
+
     if (!course) {
       return res.status(404).json({ message: "Course not found" });
     }
-    
+
     if (course.educatorId !== req.user.id && req.user.role !== "admin") {
       return res.status(403).json({ message: "You can only view analytics for your own courses" });
     }
-    
+
     const analytics = await storage.getCourseAnalytics(parseInt(req.params.courseId));
     res.json(analytics);
   });
@@ -553,17 +553,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Payouts routes
   app.post("/api/payouts/request", requireAuth, requireEducator, async (req, res) => {
     const user = await storage.getUserById(req.user.id);
-    
+
     if (user.earnings < req.body.amount) {
       return res.status(400).json({ message: "Insufficient earnings for requested payout amount" });
     }
-    
+
     const payoutData = {
       userId: req.user.id,
       amount: req.body.amount,
       status: "pending"
     };
-    
+
     const payout = await storage.createPayout(payoutData);
     res.status(201).json(payout);
   });
@@ -581,17 +581,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/admin/payouts/:id/process", requireAuth, requireAdmin, async (req, res) => {
     const payout = await storage.getPayout(parseInt(req.params.id));
-    
+
     if (!payout) {
       return res.status(404).json({ message: "Payout not found" });
     }
-    
+
     const updatedPayout = await storage.updatePayout(parseInt(req.params.id), {
       status: req.body.status,
       transactionId: req.body.transactionId,
       processedAt: new Date()
     });
-    
+
     // Update user earnings if payout is processed
     if (req.body.status === "paid") {
       const user = await storage.getUserById(payout.userId);
@@ -599,7 +599,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         earnings: user.earnings - payout.amount
       });
     }
-    
+
     res.json(updatedPayout);
   });
 
